@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WashManager - Sistema Integral</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-light: #4da6ff;
+            --secondary: #00cc99;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            min-height: 100vh;
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Estilos generales */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0052a3;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        }
+
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s;
+        }
+
+        .login-box h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--dark);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Main Layout */
+        .app-header {
+            background-color: var(--dark);
+            color: white;
+            padding: 15px 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Sidebar */
+        .app-layout {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        .sidebar {
+            width: 220px;
+            background-color: var(--dark);
+            color: white;
+            padding: 20px 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 10px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+
+        .page-title {
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        /* Clientes */
+        .client-list {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .client-item {
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .client-item:hover {
+            background-color: #f0f7ff;
+        }
+
+        .client-item.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .client-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .client-form .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-actions {
+            grid-column: span 2;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Empleados */
+        .employee-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .employee-card {
+            background: white;
+            border-radius: 4px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .employee-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .employee-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .rating-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background: white;
+        }
+
+        .rating-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .rating-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Reportes */
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            height: 300px;
+            position: relative;
+        }
+
+        .chart-title {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        canvas {
+            width: 100%;
+            height: calc(100% - 30px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-layout {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+            
+            .client-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                grid-column: span 1;
+            }
+            
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <h1><i class="fas fa-car"></i> WashManager</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" placeholder="Ingrese su usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" placeholder="Ingrese su contraseña" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="container header-content">
+                <div class="logo">WashManager</div>
+                <div class="user-menu">
+                    <span id="current-user">Admin</span>
+                    <button class="btn btn-danger" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="app-layout">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="#" class="active" data-page="dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="clientes">
+                            <i class="fas fa-users"></i> Clientes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="empleados">
+                            <i class="fas fa-user-tie"></i> Empleados
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="reportes">
+                            <i class="fas fa-chart-bar"></i> Reportes
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-content" id="main-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page">
+                    <h1 class="page-title"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                    
+                    <div class="card">
+                        <h2>Resumen del Día</h2>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;">
+                            <div class="card">
+                                <h3>Clientes</h3>
+                                <div style="font-size: 24px; font-weight: bold;" id="total-clients">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Servicios</h3>
+                                <div style="font-size: 24px; font-weight: bold;" id="total-services">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Ingresos</h3>
+                                <div style="font-size: 24px; font-weight: bold;" id="total-income">$0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Empleados</h3>
+                                <div style="font-size: 24px; font-weight: bold;" id="total-employees">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Clientes Recientes</h2>
+                        <div class="client-list" id="recent-clients">
+                            <!-- Se llena con JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clientes Page -->
+                <div id="clientes-page" class="page" style="display: none;">
+                    <h1 class="page-title"><i class="fas fa-users"></i> Gestión de Clientes</h1>
+                    
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h2>Lista de Clientes</h2>
+                            <button class="btn btn-primary" id="new-client-btn">
+                                <i class="fas fa-plus"></i> Nuevo Cliente
+                            </button>
+                        </div>
+                        
+                        <div class="client-list" id="client-list">
+                            <!-- Se llena con JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Datos del Cliente</h2>
+                        <form id="client-form" class="client-form" style="display: none;">
+                            <div class="form-group">
+                                <label for="client-name">Nombre</label>
+                                <input type="text" id="client-name" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="client-phone">Teléfono</label>
+                                <input type="text" id="client-phone" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="client-plate">Placa</label>
+                                <input type="text" id="client-plate" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="client-color">Color</label>
+                                <input type="text" id="client-color" class="form-control">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label for="client-belongings">Pertenencias</label>
+                                <textarea id="client-belongings" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-success" id="save-client">
+                                    <i class="fas fa-save"></i> Guardar
+                                </button>
+                                <button type="button" class="btn btn-warning" id="clear-form">
+                                    <i class="fas fa-broom"></i> Limpiar
+                                </button>
+                                <button type="button" class="btn btn-danger" id="delete-client">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                <button type="button" class="btn btn-primary" id="back-to-list">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Empleados Page -->
+                <div id="empleados-page" class="page" style="display: none;">
+                    <h1 class="page-title"><i class="fas fa-user-tie"></i> Evaluación de Empleados</h1>
+                    
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h2>Lista de Empleados</h2>
+                            <div>
+                                <span style="margin-right: 10px;">Progreso: </span>
+                                <span id="evaluation-progress">0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="employee-list" id="employee-list">
+                            <!-- Se llena con JavaScript -->
+                        </div>
+                        
+                        <button class="btn btn-primary" id="submit-evaluations" style="margin-top: 20px;">
+                            <i class="fas fa-paper-plane"></i> Enviar Evaluaciones
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reportes Page -->
+                <div id="reportes-page" class="page" style="display: none;">
+                    <h1 class="page-title"><i class="fas fa-chart-bar"></i> Reportes y Estadísticas</h1>
+                    
+                    <div class="card">
+                        <h2>Reporte de Servicios</h2>
+                        <div class="report-grid">
+                            <div class="chart-container">
+                                <div class="chart-title">Servicios por Tipo</div>
+                                <canvas id="services-chart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <div class="chart-title">Ingresos Mensuales</div>
+                                <canvas id="income-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Reporte de Empleados</h2>
+                        <div class="report-grid">
+                            <div class="chart-container">
+                                <div class="chart-title">Evaluación de Desempeño</div>
+                                <canvas id="performance-chart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <div class="chart-title">Clientes por Empleado</div>
+                                <canvas id="clients-per-employee-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Datos de ejemplo generados aleatoriamente
+        const colors = ['Rojo', 'Azul', 'Negro', 'Blanco', 'Plateado', 'Verde', 'Gris'];
+        const services = ['Lavado Básico', 'Lavado Premium', 'Aspirado', 'Encerado', 'Pulido'];
+        const belongings = ['Ninguna', 'Llaves en contacto', 'Maleta en baúl', 'Documentos en guantera', 'Equipo de audio'];
+        
+        // Generar clientes aleatorios
+        const clients = Array.from({length: 15}, (_, i) => ({
+            id: i + 1,
+            name: ['Luis', 'Mayra', 'Jhefer', 'Carlos', 'Ana', 'Pedro', 'María'][Math.floor(Math.random() * 7)],
+            phone: Math.floor(6000000 + Math.random() * 4000000).toString(),
+            plate: `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(100 + Math.random() * 900)}`,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            belongings: belongings[Math.floor(Math.random() * belongings.length)],
+            service: services[Math.floor(Math.random() * services.length)],
+            date: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+            employee: Math.floor(Math.random() * 5) + 1
+        }));
+
+        // Generar empleados aleatorios
+        const employees = Array.from({length: 5}, (_, i) => ({
+            id: i + 1,
+            name: ['Juan', 'Eugenio', 'Aurelio', 'Adriana', 'Vivian'][i],
+            position: ['Supervisor', 'Técnico', 'Operador', 'Asistente', 'Gerente'][i],
+            rating: null,
+            services: Math.floor(Math.random() * 20) + 5
+        }));
+
+        // Estado de la aplicación
+        let currentUser = null;
+        let currentClientId = null;
+        let charts = {};
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const app = document.getElementById('app');
+        const loginForm = document.getElementById('login-form');
+        const logoutBtn = document.getElementById('logout-btn');
+        const menuLinks = document.querySelectorAll('.sidebar-menu a');
+        const pages = document.querySelectorAll('.page');
+        
+        // Dashboard
+        const totalClientsEl = document.getElementById('total-clients');
+        const totalServicesEl = document.getElementById('total-services');
+        const totalIncomeEl = document.getElementById('total-income');
+        const totalEmployeesEl = document.getElementById('total-employees');
+        const recentClientsEl = document.getElementById('recent-clients');
+        
+        // Clientes
+        const clientListEl = document.getElementById('client-list');
+        const clientForm = document.getElementById('client-form');
+        const newClientBtn = document.getElementById('new-client-btn');
+        const saveClientBtn = document.getElementById('save-client');
+        const clearFormBtn = document.getElementById('clear-form');
+        const deleteClientBtn = document.getElementById('delete-client');
+        const backToListBtn = document.getElementById('back-to-list');
+        
+        // Empleados
+        const employeeListEl = document.getElementById('employee-list');
+        const evaluationProgressEl = document.getElementById('evaluation-progress');
+        const submitEvaluationsBtn = document.getElementById('submit-evaluations');
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event Listeners
+            loginForm.addEventListener('submit', handleLogin);
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Menu navigation
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navigateTo(this.dataset.page);
+                    
+                    // Update active state
+                    menuLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Clientes events
+            newClientBtn.addEventListener('click', showNewClientForm);
+            saveClientBtn.addEventListener('click', saveClient);
+            clearFormBtn.addEventListener('click', clearClientForm);
+            deleteClientBtn.addEventListener('click', deleteClient);
+            backToListBtn.addEventListener('click', showClientList);
+            
+            // Empleados events
+            submitEvaluationsBtn.addEventListener('click', submitEvaluations);
+            
+            // Inicializar datos
+            updateDashboard();
+            renderClientList();
+            renderEmployeeList();
+        });
+
+        // Handlers
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simular login
+            if (username && password) {
+                currentUser = {
+                    name: username,
+                    role: 'admin'
+                };
+                
+                // Mostrar aplicación
+                loginScreen.style.display = 'none';
+                app.style.display = 'block';
+                
+                // Set user info
+                document.getElementById('current-user').textContent = currentUser.name;
+                
+                // Mostrar dashboard por defecto
+                navigateTo('dashboard');
+            } else {
+                alert('Por favor ingrese usuario y contraseña');
+            }
+        }
+
+        function handleLogout() {
+            // Reset form
+            loginForm.reset();
+            
+            // Mostrar pantalla de login
+            loginScreen.style.display = 'flex';
+            app.style.display = 'none';
+            
+            // Reset current user
+            currentUser = null;
+        }
+
+        function navigateTo(page) {
+            // Ocultar todas las páginas
+            pages.forEach(p => p.style.display = 'none');
+            
+            // Mostrar página seleccionada
+            document.getElementById(`${page}-page`).style.display = 'block';
+            
+            // Actualizar título
+            document.title = `WashManager - ${page.charAt(0).toUpperCase() + page.slice(1)}`;
+            
+            // Si es la página de reportes, actualizar gráficos
+            if (page === 'reportes') {
+                updateCharts();
+            }
+        }
+
+        // Funciones del Dashboard
+        function updateDashboard() {
+            // Actualizar estadísticas
+            totalClientsEl.textContent = clients.length;
+            totalServicesEl.textContent = clients.length;
+            totalIncomeEl.textContent = `$${(clients.length * 25).toLocaleString()}`;
+            totalEmployeesEl.textContent = employees.length;
+            
+            // Mostrar clientes recientes (últimos 5)
+            const recentClients = [...clients]
+                .sort((a, b) => b.date - a.date)
+                .slice(0, 5);
+            
+            recentClientsEl.innerHTML = '';
+            recentClients.forEach(client => {
+                const clientItem = document.createElement('div');
+                clientItem.className = 'client-item';
+                clientItem.innerHTML = `
+                    <strong>${client.name}</strong> (${client.phone})<br>
+                    <small>${client.service} - ${client.date.toLocaleDateString()}</small>
+                `;
+                recentClientsEl.appendChild(clientItem);
+            });
+        }
+
+        // Funciones de Clientes
+        function renderClientList() {
+            clientListEl.innerHTML = '';
+            clients.forEach(client => {
+                const clientItem = document.createElement('div');
+                clientItem.className = 'client-item';
+                clientItem.dataset.id = client.id;
+                clientItem.innerHTML = `
+                    <strong>${client.name}</strong> (${client.phone})<br>
+                    <small>${client.plate} - ${client.color}</small>
+                `;
+                clientItem.addEventListener('click', () => loadClientData(client.id));
+                clientListEl.appendChild(clientItem);
+            });
+        }
+
+        function loadClientData(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            currentClientId = client.id;
+            document.getElementById('client-name').value = client.name;
+            document.getElementById('client-phone').value = client.phone;
+            document.getElementById('client-plate').value = client.plate;
+            document.getElementById('client-color').value = client.color;
+            document.getElementById('client-belongings').value = client.belongings;
+            
+            showClientForm();
+        }
+
+        function showNewClientForm() {
+            currentClientId = null;
+            clearClientForm();
+            showClientForm();
+        }
+
+        function showClientForm() {
+            clientListEl.style.display = 'none';
+            newClientBtn.style.display = 'none';
+            clientForm.style.display = 'grid';
+        }
+
+        function showClientList() {
+            clientListEl.style.display = 'block';
+            newClientBtn.style.display = 'block';
+            clientForm.style.display = 'none';
+        }
+
+        function clearClientForm() {
+            document.getElementById('client-form').reset();
+            currentClientId = null;
+        }
+
+        function saveClient() {
+            const clientData = {
+                name: document.getElementById('client-name').value,
+                phone: document.getElementById('client-phone').value,
+                plate: document.getElementById('client-plate').value,
+                color: document.getElementById('client-color').value,
+                belongings: document.getElementById('client-belongings').value,
+                service: services[Math.floor(Math.random() * services.length)],
+                date: new Date(),
+                employee: Math.floor(Math.random() * 5) + 1
+            };
+            
+            if (!clientData.name || !clientData.phone) {
+                alert('Nombre y teléfono son requeridos');
+                return;
+            }
+            
+            if (currentClientId) {
+                // Actualizar cliente existente
+                const index = clients.findIndex(c => c.id === currentClientId);
+                if (index !== -1) {
+                    clients[index] = { ...clients[index], ...clientData };
+                }
+            } else {
+                // Crear nuevo cliente
+                const newId = clients.length > 0 ? Math.max(...clients.map(c => c.id)) + 1 : 1;
+                clients.push({ id: newId, ...clientData });
+                currentClientId = newId;
+            }
+            
+            // Actualizar lista y dashboard
+            renderClientList();
+            updateDashboard();
+            alert('Cliente guardado exitosamente');
+            showClientList();
+        }
+
+        function deleteClient() {
+            if (!currentClientId) return;
+            
+            if (confirm('¿Está seguro de eliminar este cliente?')) {
+                const index = clients.findIndex(c => c.id === currentClientId);
+                if (index !== -1) {
+                    clients.splice(index, 1);
+                    renderClientList();
+                    updateDashboard();
+                    clearClientForm();
+                    showClientList();
+                    alert('Cliente eliminado');
+                }
+            }
+        }
+
+        // Funciones de Empleados
+        function renderEmployeeList() {
+            employeeListEl.innerHTML = '';
+            employees.forEach(employee => {
+                const employeeCard = document.createElement('div');
+                employeeCard.className = 'employee-card';
+                employeeCard.innerHTML = `
+                    <div class="employee-header">
+                        <div class="employee-name">${employee.name} - ${employee.position}</div>
+                        <div>${employee.rating ? `Calificación: ${employee.rating}` : 'Sin calificar'}</div>
+                    </div>
+                    <div class="rating-buttons">
+                        ${[1, 2, 3, 4, 5].map(score => `
+                            <div class="rating-btn ${employee.rating === score ? 'active' : ''}" 
+                                 data-id="${employee.id}" 
+                                 data-score="${score}"
+                                 onclick="rateEmployee(this, ${employee.id}, ${score})">
+                                ${score}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                employeeListEl.appendChild(employeeCard);
+            });
+            updateEvaluationProgress();
+        }
+
+        function rateEmployee(element, employeeId, score) {
+            const employee = employees.find(e => e.id === employeeId);
+            if (!employee) return;
+            
+            // Actualizar calificación
+            employee.rating = score;
+            
+            // Actualizar UI
+            const buttons = element.parentElement.querySelectorAll('.rating-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Actualizar progreso
+            updateEvaluationProgress();
+        }
+
+        function updateEvaluationProgress() {
+            const ratedEmployees = employees.filter(e => e.rating !== null).length;
+            const progress = Math.round((ratedEmployees / employees.length) * 100);
+            evaluationProgressEl.textContent = `${progress}%`;
+        }
+
+        function submitEvaluations() {
+            const unratedEmployees = employees.filter(e => e.rating === null);
+            if (unratedEmployees.length > 0) {
+                alert('Por favor califique a todos los empleados antes de enviar.');
+                return;
+            }
+            
+            // En una aplicación real, aquí enviaríamos los datos al servidor
+            console.log('Evaluaciones enviadas:', employees);
+            alert('Evaluaciones enviadas correctamente!');
+            
+            // Actualizar gráficos
+            updateCharts();
+        }
+
+        // Funciones de Reportes
+        function updateCharts() {
+            // Destruir gráficos existentes
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            
+            // Gráfico de servicios por tipo
+            const servicesCount = {};
+            services.forEach(service => {
+                servicesCount[service] = clients.filter(c => c.service === service).length;
+            });
+            
+            const servicesCtx = document.getElementById('services-chart').getContext('2d');
+            charts.servicesChart = new Chart(servicesCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(servicesCount),
+                    datasets: [{
+                        data: Object.values(servicesCount),
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+                        ]
+                    }]
+                }
+            });
+            
+            // Gráfico de ingresos mensuales
+            const monthlyIncome = Array(12).fill(0);
+            clients.forEach(client => {
+                const month = client.date.getMonth();
+                monthlyIncome[month] += 25; // $25 por servicio
+            });
+            
+            const incomeCtx = document.getElementById('income-chart').getContext('2d');
+            charts.incomeChart = new Chart(incomeCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Ingresos ($)',
+                        data: monthlyIncome,
+                        borderColor: '#4BC0C0',
+                        fill: false
+                    }]
+                }
+            });
+            
+            // Gráfico de evaluación de desempeño
+            const performanceCtx = document.getElementById('performance-chart').getContext('2d');
+            charts.performanceChart = new Chart(performanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: employees.map(e => e.name),
+                    datasets: [{
+                        label: 'Calificación',
+                        data: employees.map(e => e.rating || 0),
+                        backgroundColor: '#36A2EB'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de clientes por empleado
+            const clientsPerEmployee = employees.map(employee => {
+                return clients.filter(c => c.employee === employee.id).length;
+            });
+            
+            const clientsPerEmployeeCtx = document.getElementById('clients-per-employee-chart').getContext('2d');
+            charts.clientsPerEmployeeChart = new Chart(clientsPerEmployeeCtx, {
+                type: 'bar',
+                data: {
+                    labels: employees.map(e => e.name),
+                    datasets: [{
+                        label: 'Clientes atendidos',
+                        data: clientsPerEmployee,
+                        backgroundColor: '#FFCE56'
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>
