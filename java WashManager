@@ -1,0 +1,803 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.io.*;
+
+public class AquaMaxSystem {
+    public static void main(String[] args) {
+        Database.loadData();
+        SwingUtilities.invokeLater(() -> {
+            new LoginFrame().setVisible(true);
+        });
+    }
+}
+
+class Database {
+    private static Map<String, String> users = new HashMap<>();
+    private static ArrayList<Client> clients = new ArrayList<>();
+    private static ArrayList<Employee> employees = new ArrayList<>();
+    private static ArrayList<WashService> services = new ArrayList<>();
+    private static final String DATA_FILE = "aquamax_data.dat";
+    
+    static {
+        users.put("gerente", "12345");
+        employees.add(new Employee("Juan", "juan", "1111"));
+        employees.add(new Employee("Eugenio", "eugenio", "2222"));
+        employees.add(new Employee("Aurelio", "aurelio", "3333"));
+        employees.add(new Employee("Adriana", "adriana", "4444"));
+        employees.add(new Employee("Vivian", "vivian", "5555"));
+    }
+    
+    public static boolean validateUser(String username, String pin) {
+        return users.containsKey(username) && users.get(username).equals(pin);
+    }
+    
+    public static void addClient(Client client) {
+        clients.add(client);
+        saveData();
+    }
+    
+    public static void addEmployee(Employee employee) {
+        employees.add(employee);
+        users.put(employee.getUsername(), employee.getPin());
+        saveData();
+    }
+    
+    public static void addService(WashService service) {
+        services.add(service);
+        saveData();
+    }
+    
+    public static ArrayList<Client> getClients() {
+        return new ArrayList<>(clients);
+    }
+    
+    public static ArrayList<Employee> getEmployees() {
+        return new ArrayList<>(employees);
+    }
+    
+    public static ArrayList<WashService> getServices() {
+        return new ArrayList<>(services);
+    }
+    
+    public static Map<String, Integer> getServiceCountByDay() {
+        Map<String, Integer> dayCount = new HashMap<>();
+        String[] days = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+        
+        Random random = new Random();
+        for (String day : days) {
+            dayCount.put(day, random.nextInt(20) + 5);
+        }
+        return dayCount;
+    }
+    
+    public static Map<String, Double> getRevenueByDay() {
+        Map<String, Double> revenueMap = new HashMap<>();
+        String[] days = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+        
+        Random random = new Random();
+        for (String day : days) {
+            revenueMap.put(day, (random.nextDouble() * 1000) + 500);
+        }
+        return revenueMap;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static void loadData() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
+            clients = (ArrayList<Client>) ois.readObject();
+            employees = (ArrayList<Employee>) ois.readObject();
+            services = (ArrayList<WashService>) ois.readObject();
+            
+            users.clear();
+            users.put("gerente", "12345");
+            for (Employee emp : employees) {
+                users.put(emp.getUsername(), emp.getPin());
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("No se encontró archivo de datos, usando valores por defecto");
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static void saveData() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+            oos.writeObject(clients);
+            oos.writeObject(employees);
+            oos.writeObject(services);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al guardar datos: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
+
+class Client implements Serializable {
+    private String name;
+    private String phone;
+    private ArrayList<Vehicle> vehicles = new ArrayList<>();
+    
+    public Client(String name, String phone) {
+        this.name = name;
+        this.phone = phone;
+    }
+    
+    public void addVehicle(Vehicle vehicle) {
+        vehicles.add(vehicle);
+    }
+    
+    public String getName() { return name; }
+    public String getPhone() { return phone; }
+    public ArrayList<Vehicle> getVehicles() { return new ArrayList<>(vehicles); }
+    
+    @Override
+    public String toString() {
+        return name + " (" + phone + ")";
+    }
+}
+
+class Vehicle implements Serializable {
+    private String licensePlate;
+    private String color;
+    private String[] belongings;
+    
+    public Vehicle(String licensePlate, String color, String[] belongings) {
+        this.licensePlate = licensePlate;
+        this.color = color;
+        this.belongings = belongings;
+    }
+    
+    public String getLicensePlate() { return licensePlate; }
+    public String getColor() { return color; }
+    public String[] getBelongings() { return belongings; }
+    
+    @Override
+    public String toString() {
+        return licensePlate + " (" + color + ")";
+    }
+}
+
+class Employee implements Serializable {
+    private String name;
+    private String username;
+    private String pin;
+    private int rating;
+    
+    public Employee(String name, String username, String pin) {
+        this.name = name;
+        this.username = username;
+        this.pin = pin;
+        this.rating = 0;
+    }
+    
+    public String getName() { return name; }
+    public String getUsername() { return username; }
+    public String getPin() { return pin; }
+    public int getRating() { return rating; }
+    public void setRating(int rating) { 
+        this.rating = rating;
+        Database.saveData();
+    }
+    
+    public String getRatingDisplay() {
+        if (rating == 0) return "Sin calificar";
+        return "★".repeat(rating) + " (" + rating + "/5)";
+    }
+    
+    @Override
+    public String toString() {
+        return name + " - Calificación: " + getRatingDisplay();
+    }
+}
+
+class WashService implements Serializable {
+    public static final String[] SERVICE_TYPES = {
+        "Básico ($30)", 
+        "Normal ($60)", 
+        "Premium ($100)"
+    };
+    
+    private Client client;
+    private Vehicle vehicle;
+    private String serviceType;
+    private Date date;
+    private double amount;
+    private Employee attendant;
+    private String notes;
+    
+    public WashService(Client client, Vehicle vehicle, String serviceType, 
+                      Date date, double amount, Employee attendant, String notes) {
+        this.client = client;
+        this.vehicle = vehicle;
+        this.serviceType = serviceType;
+        this.date = date;
+        this.amount = amount;
+        this.attendant = attendant;
+        this.notes = notes;
+    }
+    
+    public Client getClient() { return client; }
+    public Vehicle getVehicle() { return vehicle; }
+    public String getServiceType() { return serviceType; }
+    public Date getDate() { return date; }
+    public double getAmount() { return amount; }
+    public Employee getAttendant() { return attendant; }
+    public String getNotes() { return notes; }
+}
+
+class LoginFrame extends JFrame {
+    private JTextField usernameField;
+    private JPasswordField pinField;
+    
+    public LoginFrame() {
+        setTitle("AquaMax - Inicio de Sesión");
+        setSize(350, 200);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        
+        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        panel.add(new JLabel("Usuario:"));
+        usernameField = new JTextField("gerente");
+        panel.add(usernameField);
+        
+        panel.add(new JLabel("PIN:"));
+        pinField = new JPasswordField("12345");
+        panel.add(pinField);
+        
+        JButton loginButton = new JButton("Iniciar Sesión");
+        loginButton.addActionListener(e -> login());
+        
+        JButton cancelButton = new JButton("Cancelar");
+        cancelButton.addActionListener(e -> System.exit(0));
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        buttonPanel.add(loginButton);
+        buttonPanel.add(cancelButton);
+        
+        add(panel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+    
+    private void login() {
+        String username = usernameField.getText().trim();
+        String pin = new String(pinField.getPassword()).trim();
+        
+        if (username.isEmpty() || pin.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Usuario y PIN son requeridos", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (Database.validateUser(username, pin)) {
+            new MainMenuFrame().setVisible(true);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Usuario o PIN incorrectos", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            pinField.setText("");
+        }
+    }
+}
+
+class MainMenuFrame extends JFrame {
+    public MainMenuFrame() {
+        setTitle("AquaMax - Menú Principal");
+        setSize(500, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        
+        JPanel panel = new JPanel(new GridLayout(5, 1, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JLabel titleLabel = new JLabel("Sistema AquaMax", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        panel.add(titleLabel);
+        
+        JButton clientButton = new JButton("Gestión de Clientes");
+        clientButton.addActionListener(e -> {
+            new ClientManagerFrame().setVisible(true);
+            dispose();
+        });
+        
+        JButton employeeButton = new JButton("Gestión de Empleados");
+        employeeButton.addActionListener(e -> {
+            new EmployeeManagerFrame().setVisible(true);
+            dispose();
+        });
+        
+        JButton serviceButton = new JButton("Registrar Servicio");
+        serviceButton.addActionListener(e -> {
+            new WashServiceFrame().setVisible(true);
+            dispose();
+        });
+        
+        JButton reportsButton = new JButton("Reportes y Estadísticas");
+        reportsButton.addActionListener(e -> {
+            new ReportsFrame().setVisible(true);
+            dispose();
+        });
+        
+        panel.add(clientButton);
+        panel.add(employeeButton);
+        panel.add(serviceButton);
+        panel.add(reportsButton);
+        
+        add(panel);
+    }
+}
+
+class ClientManagerFrame extends JFrame {
+    private JTextField nameField, phoneField, licenseField, colorField;
+    private JTextArea belongingsArea;
+    private JList<Client> clientList;
+    private DefaultListModel<Client> clientListModel;
+    
+    public ClientManagerFrame() {
+        setTitle("AquaMax - Gestión de Clientes");
+        setSize(800, 500);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JPanel dataPanel = new JPanel();
+        dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
+        dataPanel.setBorder(BorderFactory.createTitledBorder("Datos del Cliente"));
+        
+        nameField = new JTextField(20);
+        phoneField = new JTextField(20);
+        licenseField = new JTextField(20);
+        colorField = new JTextField(20);
+        belongingsArea = new JTextArea(3, 20);
+        
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+        formPanel.add(new JLabel("Nombre:"));
+        formPanel.add(nameField);
+        formPanel.add(new JLabel("Teléfono:"));
+        formPanel.add(phoneField);
+        formPanel.add(new JLabel("Placa:"));
+        formPanel.add(licenseField);
+        formPanel.add(new JLabel("Color:"));
+        formPanel.add(colorField);
+        
+        dataPanel.add(formPanel);
+        dataPanel.add(new JLabel("Pertenencias:"));
+        dataPanel.add(new JScrollPane(belongingsArea));
+        
+        JButton saveButton = new JButton("Guardar");
+        saveButton.addActionListener(e -> saveClient());
+        
+        JButton clearButton = new JButton("Limpiar");
+        clearButton.addActionListener(e -> clearFields());
+        
+        JButton deleteButton = new JButton("Eliminar");
+        deleteButton.addActionListener(e -> deleteClient());
+        
+        JButton backButton = new JButton("Volver");
+        backButton.addActionListener(e -> {
+            new MainMenuFrame().setVisible(true);
+            dispose();
+        });
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
+        buttonPanel.add(saveButton);
+        buttonPanel.add(clearButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(backButton);
+        
+        clientListModel = new DefaultListModel<>();
+        updateClientList();
+        clientList = new JList<>(clientListModel);
+        clientList.addListSelectionListener(e -> showSelectedClient());
+        
+        mainPanel.add(new JScrollPane(clientList), BorderLayout.WEST);
+        mainPanel.add(dataPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        add(mainPanel);
+    }
+    
+    private void saveClient() {
+        String name = nameField.getText().trim();
+        String phone = phoneField.getText().trim();
+        String license = licenseField.getText().trim();
+        String color = colorField.getText().trim();
+        String belongingsText = belongingsArea.getText().trim();
+        
+        if (name.isEmpty() || license.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nombre y placa son requeridos", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String[] belongings = belongingsText.isEmpty() ? new String[0] : belongingsText.split("\\s*,\\s*");
+        
+        Client client = new Client(name, phone);
+        Vehicle vehicle = new Vehicle(license, color, belongings);
+        client.addVehicle(vehicle);
+        
+        int selectedIndex = clientList.getSelectedIndex();
+        if (selectedIndex == -1) {
+            Database.addClient(client);
+            JOptionPane.showMessageDialog(this, "Cliente registrado exitosamente", 
+                "Éxito", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            Database.getClients().set(selectedIndex, client);
+            Database.saveData();
+            JOptionPane.showMessageDialog(this, "Cliente actualizado exitosamente", 
+                "Éxito", JOptionPane.INFORMATION_MESSAGE);
+        }
+        
+        updateClientList();
+        clearFields();
+    }
+    
+    private void clearFields() {
+        nameField.setText("");
+        phoneField.setText("");
+        licenseField.setText("");
+        colorField.setText("");
+        belongingsArea.setText("");
+        clientList.clearSelection();
+    }
+    
+    private void deleteClient() {
+        int selectedIndex = clientList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "¿Eliminar este cliente?", "Confirmar", JOptionPane.YES_NO_OPTION);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                Database.getClients().remove(selectedIndex);
+                Database.saveData();
+                updateClientList();
+                clearFields();
+                JOptionPane.showMessageDialog(this, "Cliente eliminado exitosamente", 
+                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Seleccione un cliente para eliminar", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private void showSelectedClient() {
+        int selectedIndex = clientList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            Client selected = Database.getClients().get(selectedIndex);
+            nameField.setText(selected.getName());
+            phoneField.setText(selected.getPhone());
+            
+            if (!selected.getVehicles().isEmpty()) {
+                Vehicle vehicle = selected.getVehicles().get(0);
+                licenseField.setText(vehicle.getLicensePlate());
+                colorField.setText(vehicle.getColor());
+                belongingsArea.setText(String.join(", ", vehicle.getBelongings()));
+            }
+        }
+    }
+    
+    private void updateClientList() {
+        clientListModel.clear();
+        Database.getClients().forEach(clientListModel::addElement);
+    }
+}
+
+class EmployeeManagerFrame extends JFrame {
+    private JList<Employee> employeeList;
+    private DefaultListModel<Employee> employeeListModel;
+    
+    public EmployeeManagerFrame() {
+        setTitle("AquaMax - Gestión de Empleados");
+        setSize(700, 500);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        employeeListModel = new DefaultListModel<>();
+        Database.getEmployees().forEach(employeeListModel::addElement);
+        
+        employeeList = new JList<>(employeeListModel);
+        employeeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        employeeList.setFont(new Font("Arial", Font.PLAIN, 14));
+        
+        JScrollPane listScrollPane = new JScrollPane(employeeList);
+        
+        JPanel ratingPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        ratingPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JPanel starsPanel = new JPanel(new GridLayout(1, 5, 5, 5));
+        starsPanel.setBorder(BorderFactory.createTitledBorder("Calificar con estrellas (1-5)"));
+        
+        for (int i = 1; i <= 5; i++) {
+            JButton starButton = new JButton("★".repeat(i));
+            starButton.setFont(new Font("Arial", Font.PLAIN, 20));
+            starButton.setForeground(i >= 4 ? Color.GREEN : i >= 2 ? Color.ORANGE : Color.RED);
+            final int rating = i;
+            starButton.addActionListener(e -> rateEmployee(rating));
+            starsPanel.add(starButton);
+        }
+        
+        JButton unrateButton = new JButton("Quitar calificación");
+        unrateButton.addActionListener(e -> rateEmployee(0));
+        
+        ratingPanel.add(starsPanel);
+        ratingPanel.add(unrateButton);
+        
+        JButton backButton = new JButton("Volver al Menú Principal");
+        backButton.addActionListener(e -> {
+            new MainMenuFrame().setVisible(true);
+            dispose();
+        });
+        
+        mainPanel.add(new JLabel("Lista de Empleados:", JLabel.CENTER), BorderLayout.NORTH);
+        mainPanel.add(listScrollPane, BorderLayout.CENTER);
+        mainPanel.add(ratingPanel, BorderLayout.SOUTH);
+        mainPanel.add(backButton, BorderLayout.PAGE_END);
+        
+        add(mainPanel);
+    }
+    
+    private void rateEmployee(int rating) {
+        int selectedIndex = employeeList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            Employee selected = employeeListModel.getElementAt(selectedIndex);
+            selected.setRating(rating);
+            employeeListModel.set(selectedIndex, selected);
+            
+            String message = rating == 0 ? 
+                "Calificación eliminada para " + selected.getName() :
+                selected.getName() + " calificado con " + rating + " estrella" + (rating > 1 ? "s" : "");
+            
+            JOptionPane.showMessageDialog(this, message,
+                "Calificación Registrada", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "Seleccione un empleado para calificar",
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
+
+class WashServiceFrame extends JFrame {
+    private JComboBox<String> serviceTypeCombo;
+    private JTextArea notesArea;
+    
+    public WashServiceFrame() {
+        setTitle("AquaMax - Registrar Servicio");
+        setSize(500, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JPanel servicePanel = new JPanel();
+        servicePanel.setLayout(new BoxLayout(servicePanel, BoxLayout.Y_AXIS));
+        
+        JPanel typePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        typePanel.add(new JLabel("Tipo de Lavado:"));
+        serviceTypeCombo = new JComboBox<>(WashService.SERVICE_TYPES);
+        typePanel.add(serviceTypeCombo);
+        
+        JPanel notesPanel = new JPanel(new BorderLayout());
+        notesPanel.add(new JLabel("Notas:"), BorderLayout.NORTH);
+        notesArea = new JTextArea(5, 30);
+        notesArea.setLineWrap(true);
+        notesPanel.add(new JScrollPane(notesArea), BorderLayout.CENTER);
+        
+        servicePanel.add(typePanel);
+        servicePanel.add(notesPanel);
+        
+        JButton registerButton = new JButton("Registrar Servicio");
+        registerButton.addActionListener(e -> registerService());
+        
+        JButton backButton = new JButton("Volver");
+        backButton.addActionListener(e -> {
+            new MainMenuFrame().setVisible(true);
+            dispose();
+        });
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        buttonPanel.add(registerButton);
+        buttonPanel.add(backButton);
+        
+        mainPanel.add(servicePanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        add(mainPanel);
+    }
+    
+    private void registerService() {
+        String serviceType = (String) serviceTypeCombo.getSelectedItem();
+        String notes = notesArea.getText().trim();
+        
+        WashService service = new WashService(null, null, serviceType, 
+            new Date(), 0.0, null, notes);
+        
+        Database.addService(service);
+        JOptionPane.showMessageDialog(this, 
+            "Servicio registrado exitosamente\n" +
+            "Tipo: " + serviceType,
+            "Éxito", JOptionPane.INFORMATION_MESSAGE);
+    }
+}
+
+class ReportsFrame extends JFrame {
+    public ReportsFrame() {
+        setTitle("AquaMax - Reportes y Estadísticas");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Estadísticas", createStatsPanel());
+        tabbedPane.addTab("Calificaciones", createRatingsPanel());
+        
+        JButton backButton = new JButton("Volver al Menú Principal");
+        backButton.addActionListener(e -> {
+            new MainMenuFrame().setVisible(true);
+            dispose();
+        });
+        
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        mainPanel.add(backButton, BorderLayout.SOUTH);
+        
+        add(mainPanel);
+    }
+    
+    private JPanel createStatsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        JTextArea reportArea = new JTextArea();
+        reportArea.setEditable(false);
+        reportArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        
+        Map<String, Integer> serviceCount = Database.getServiceCountByDay();
+        Map<String, Double> revenueByDay = Database.getRevenueByDay();
+        
+        StringBuilder report = new StringBuilder();
+        report.append("REPORTE DE SERVICIOS\n\n");
+        report.append("Días con más servicios:\n");
+        
+        for (Map.Entry<String, Integer> entry : serviceCount.entrySet()) {
+            report.append(String.format("- %s: %d servicios (Ingresos: $%.2f)%n", 
+                entry.getKey(), entry.getValue(), revenueByDay.get(entry.getKey())));
+        }
+        
+        int totalServices = serviceCount.values().stream().mapToInt(Integer::intValue).sum();
+        double totalRevenue = revenueByDay.values().stream().mapToDouble(Double::doubleValue).sum();
+        
+        report.append(String.format("%nTotal servicios: %d%n", totalServices));
+        report.append(String.format("Total ingresos: $%.2f%n", totalRevenue));
+        
+        reportArea.setText(report.toString());
+        panel.add(new JScrollPane(reportArea), BorderLayout.CENTER);
+        return panel;
+    }
+    
+    private JPanel createRatingsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        String[] columnNames = {"Nombre", "Calificación"};
+        Object[][] data = Database.getEmployees().stream()
+            .map(emp -> new Object[]{emp.getName(), emp.getRatingDisplay()})
+            .toArray(Object[][]::new);
+        
+        JTable table = new JTable(data, columnNames);
+        table.setFont(new Font("Arial", Font.PLAIN, 14));
+        table.setRowHeight(25);
+        table.getColumnModel().getColumn(0).setPreferredWidth(150);
+        table.getColumnModel().getColumn(1).setPreferredWidth(200);
+        
+        JPanel chartPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                drawRatingsChart(g);
+            }
+        };
+        chartPanel.setPreferredSize(new Dimension(400, 200));
+        
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+            new JScrollPane(table), chartPanel);
+        splitPane.setResizeWeight(0.5);
+        
+        panel.add(splitPane, BorderLayout.CENTER);
+        return panel;
+    }
+    
+    private void drawRatingsChart(Graphics g) {
+        Map<Integer, Integer> ratingCounts = new HashMap<>();
+        for (int i = 0; i <= 5; i++) {
+            ratingCounts.put(i, 0);
+        }
+        
+        for (Employee emp : Database.getEmployees()) {
+            int rating = emp.getRating();
+            ratingCounts.put(rating, ratingCounts.get(rating) + 1);
+        }
+
+        int width = getWidth();
+        int height = getHeight();
+        int padding = 50;
+        int chartWidth = width - 2 * padding;
+        int chartHeight = height - 2 * padding;
+        int barCount = 6;
+        int barWidth = chartWidth / (barCount + 2);
+        
+        // Fondo blanco
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, width, height);
+        
+        // Título
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 14));
+        g.drawString("Distribución de Calificaciones", padding, 30);
+        
+        // Dibujar ejes
+        g.drawLine(padding, height - padding, width - padding, height - padding);
+        g.drawLine(padding, height - padding, padding, padding);
+        
+        // Etiquetas eje Y
+        g.setFont(new Font("Arial", Font.PLAIN, 12));
+        int maxCount = Collections.max(ratingCounts.values());
+        int ySteps = Math.max(1, maxCount / 5);
+        
+        for (int i = 0; i <= maxCount; i += ySteps) {
+            int y = height - padding - (i * chartHeight / maxCount);
+            g.drawString(String.valueOf(i), padding - 30, y + 5);
+            g.drawLine(padding - 5, y, padding, y);
+        }
+        
+        // Dibujar barras
+        for (int i = 0; i <= 5; i++) {
+            int x = padding + (i * (chartWidth / barCount)) + (barWidth / 2);
+            int barHeight = (int)((ratingCounts.get(i) / (double)maxCount) * chartHeight);
+            
+            // Color según la calificación
+            if (i == 0) g.setColor(Color.GRAY);
+            else if (i <= 2) g.setColor(Color.RED);
+            else if (i == 3) g.setColor(Color.ORANGE);
+            else g.setColor(Color.GREEN);
+            
+            g.fillRect(x, height - padding - barHeight, barWidth, barHeight);
+            g.setColor(Color.BLACK);
+            g.drawRect(x, height - padding - barHeight, barWidth, barHeight);
+            g.drawString(String.valueOf(ratingCounts.get(i)), 
+                x + (barWidth / 2) - 10, height - padding - barHeight - 5);
+            
+            String label = i == 0 ? "N/A" : "★".repeat(i);
+            g.drawString(label, x + (barWidth / 2) - 10, height - padding + 20);
+        }
+        
+        // Leyenda
+        g.setFont(new Font("Arial", Font.PLAIN, 12));
+        g.drawString("N/A = Sin calificar", width - 150, 50);
+        g.setColor(Color.RED);
+        g.fillRect(width - 150, 70, 20, 20);
+        g.setColor(Color.BLACK);
+        g.drawString("1-2 Estrellas", width - 120, 85);
+        g.setColor(Color.ORANGE);
+        g.fillRect(width - 150, 100, 20, 20);
+        g.setColor(Color.BLACK);
+        g.drawString("3 Estrellas", width - 120, 115);
+        g.setColor(Color.GREEN);
+        g.fillRect(width - 150, 130, 20, 20);
+        g.setColor(Color.BLACK);
+        g.drawString("4-5 Estrellas", width - 120, 145);
+    }
+}
