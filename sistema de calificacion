@@ -1,0 +1,152 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Sistema de Gestión de Empleados AquaMax
+ * Permite calificar empleados con una escala del 1 al 5
+ */
+public class AquaMaxGestionEmpleados extends JFrame {
+    private Map<String, Integer> calificaciones = new HashMap<>();
+    private JPanel mainPanel;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            AquaMaxGestionEmpleados frame = new AquaMaxGestionEmpleados();
+            frame.setVisible(true);
+        });
+    }
+
+    public AquaMaxGestionEmpleados() {
+        super("AquaMax - Gestión de Empleados");
+        configurarVentana();
+        inicializarInterfaz();
+    }
+
+    private void configurarVentana() {
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(700, 500);
+        setLocationRelativeTo(null);
+        setIconImage(new ImageIcon("icon.png").getImage()); // Opcional: añadir icono
+    }
+
+    private void inicializarInterfaz() {
+        mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        agregarTitulo();
+        agregarListaEmpleados();
+        agregarBotonInferior();
+
+        add(mainPanel);
+    }
+
+    private void agregarTitulo() {
+        JLabel titulo = new JLabel("AquaMax - Gestión de Empleados", SwingConstants.CENTER);
+        titulo.setFont(new Font("Arial", Font.BOLD, 20));
+        titulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+        mainPanel.add(titulo, BorderLayout.NORTH);
+    }
+
+    private void agregarListaEmpleados() {
+        JPanel empleadosPanel = new JPanel();
+        empleadosPanel.setLayout(new BoxLayout(empleadosPanel, BoxLayout.Y_AXIS));
+        empleadosPanel.setBorder(BorderFactory.createTitledBorder("Lista de Empleados"));
+
+        String[] empleados = {"Juan", "Eugenio", "Aurelio", "Adriana", "Vivian"};
+
+        for (String empleado : empleados) {
+            calificaciones.put(empleado, 0); // 0 = Sin calificar
+            empleadosPanel.add(crearPanelEmpleado(empleado));
+            empleadosPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Espacio entre empleados
+        }
+
+        JScrollPane scrollPane = new JScrollPane(empleadosPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private JPanel crearPanelEmpleado(String empleado) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+
+        JLabel nombreLabel = new JLabel(empleado);
+        nombreLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        nombreLabel.setPreferredSize(new Dimension(100, 20));
+        panel.add(nombreLabel);
+
+        panel.add(new JLabel("Calificación:"));
+        
+        ButtonGroup grupoBotones = new ButtonGroup();
+        JLabel calificacionLabel = new JLabel("Sin calificar");
+        calificacionLabel.setPreferredSize(new Dimension(120, 20));
+
+        for (int i = 1; i <= 5; i++) {
+            JRadioButton boton = crearBotonCalificacion(empleado, i, calificacionLabel);
+            grupoBotones.add(boton);
+            panel.add(boton);
+        }
+
+        panel.add(Box.createHorizontalStrut(10));
+        panel.add(calificacionLabel);
+
+        return panel;
+    }
+
+    private JRadioButton crearBotonCalificacion(String empleado, int valor, JLabel etiqueta) {
+        JRadioButton boton = new JRadioButton(String.valueOf(valor));
+        boton.setActionCommand(empleado + ":" + valor);
+        boton.addActionListener(e -> {
+            String[] parts = e.getActionCommand().split(":");
+            calificaciones.put(parts[0], Integer.parseInt(parts[1]));
+            etiqueta.setText("Calificación: " + parts[1]);
+        });
+        return boton;
+    }
+
+    private void agregarBotonInferior() {
+        JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panelBoton.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        JButton volverButton = new JButton("Guardar y Volver al Menú Principal");
+        volverButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        volverButton.setPreferredSize(new Dimension(250, 35));
+        volverButton.addActionListener(e -> guardarYSalir());
+
+        panelBoton.add(volverButton);
+        mainPanel.add(panelBoton, BorderLayout.SOUTH);
+    }
+
+    private void guardarYSalir() {
+        guardarCalificaciones();
+        JOptionPane.showMessageDialog(this, 
+            "Calificaciones guardadas correctamente", 
+            "Éxito", 
+            JOptionPane.INFORMATION_MESSAGE);
+        dispose();
+    }
+
+    private void guardarCalificaciones() {
+        // Aquí iría el código para guardar en base de datos o archivo
+        System.out.println("\n--- Calificaciones Guardadas ---");
+        calificaciones.forEach((nombre, calificacion) -> {
+            String estado = (calificacion == 0) ? "Sin calificar" : "Calificación: " + calificacion;
+            System.out.printf("%-10s: %s%n", nombre, estado);
+        });
+        System.out.println("-------------------------------\n");
+        
+        // Ejemplo de cómo podrías guardar en un archivo:
+        // try (PrintWriter writer = new PrintWriter("calificaciones.txt")) {
+        //     calificaciones.forEach((nombre, calif) -> 
+        //         writer.println(nombre + ":" + calif));
+        // } catch (FileNotFoundException ex) {
+        //     ex.printStackTrace();
+        // }
+    }
+}
