@@ -1,0 +1,107 @@
+WashManager es un sistema integral desarrollado en Java para la gestión de lavaderos de automóviles. Su objetivo principal es automatizar procesos como el registro de clientes, evaluación de empleados, promociones, manejo de reclamos y generación de reportes estadísticos.
+
+Este documento detalla las tecnologías utilizadas, la arquitectura del sistema, los módulos funcionales y las consideraciones técnicas adoptadas en su desarrollo.
+
+*Tecnologías Utilizadas
+* Lenguaje de Programación
+Java (JDK 11 o superior) HTML
+
+Se eligió Java por su robustez, portabilidad y amplio soporte en el desarrollo de aplicaciones empresariales.
+
+Se utilizaron características como:
+
+POO (Clases, Herencia, Encapsulamiento)
+
+Colecciones (Listas, Mapas)
+
+Streams API para procesamiento de datos en reportes.
+
+*Entorno de Desarrollo
+IDE: IntelliJ IDEA / Eclipse (para desarrollo y debugging).
+
+Control de Versiones: Git (opcional, para trabajo colaborativo).
+
+Build Tool: Maven o Gradle (para gestión de dependencias, aunque en este caso se usó Java estándar sin frameworks externos).
+
+* Persistencia de Datos
+Almacenamiento en Memoria (RAM):
+
+Se usaron ArrayList y HashMap para almacenar clientes, empleados, ofertas y reclamos.
+
+Ventaja: Simpleza y rapidez en desarrollo.
+
+Desventaja: Los datos se pierden al cerrar la aplicación (se recomienda migrar a una base de datos en futuras versiones).
+
+*Interfaz de Usuario
+Consola (CLI):
+
+Menús interactivos con Scanner para entrada de datos.
+
+Validaciones básicas para evitar errores en la entrada del usuario.
+
+* Generación de Reportes
+Métodos personalizados con System.out.println() para mostrar datos en consola.
+
+Agrupamiento de datos con Streams y Map para estadísticas.
+ 
+*Arquitectura del Sistema
+*Estructura Modular
+El sistema sigue un enfoque modular con los siguientes componentes principales:
+
+Módulo	Descripción
+Gestión de Clientes	Registro, edición y eliminación de clientes. Datos: nombre, teléfono, placa, etc.
+Evaluación de Empleados	Calificación del personal (1-5 estrellas) y seguimiento de desempeño.
+Ofertas y Promociones	Creación y gestión de descuentos (ej: "2x1 en lavados los jueves").
+Gestión de Reclamos	Registro y seguimiento de quejas de clientes (pendiente, en proceso, resuelto).
+Reportes Estadísticos	Generación de métricas (ingresos, servicios por tipo, reclamos por mes, etc.).
+
+
+Flujo de Trabajo
+*Proceso de Gestión de Clientes
+Registro:
+
+Se ingresan datos como nombre, teléfono y placa del vehículo.
+
+El sistema genera un ID único automáticamente.
+
+Edición:
+
+Permite modificar campos específicos sin perder información previa.
+
+Eliminación:
+
+Solicita confirmación antes de borrar un cliente.
+
+*Evaluación de Empleados
+Cada empleado puede ser calificado del 1 al 5.
+
+El sistema muestra el progreso de evaluación (% de empleados calificados).
+
+Solo permite enviar evaluaciones cuando todos los empleados han sido calificados.
+
+*Manejo de Reclamos
+Clasificación por tipo:
+
+Problemas con el servicio.
+
+Quejas sobre empleados.
+
+Daños al vehículo.
+
+Seguimiento por estado (pendiente → en proceso → resuelto).
+ 
+*Generación de Reportes
+Servicios más solicitados.
+
+Ingresos mensuales estimados (ej: $25 por lavado).
+
+Reclamos por tipo y estado.
+
+* Limitaciones y Mejoras Futuras
+*
+Limitaciones Actuales
+No hay persistencia en base de datos (los datos se pierden al cerrar la app).
+
+Interfaz en consola (podría migrarse a JavaFX o una web app).
+
+Sin autenticación de usuarios (todos los usuarios tienen acceso completo).
