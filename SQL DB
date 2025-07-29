@@ -1,0 +1,430 @@
+-- Creación de la base de datos
+DROP DATABASE IF EXISTS washmanager_db;
+CREATE DATABASE washmanager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE washmanager_db;
+
+-- Tabla de roles de usuario
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255)
+) ENGINE=InnoDB;
+
+-- Tabla de usuarios
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    nombre_completo VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    rol_id INT NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rol_id) REFERENCES roles(id)
+) ENGINE=InnoDB;
+
+-- Tabla de empleados
+CREATE TABLE empleados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT UNIQUE,
+    puesto VARCHAR(50) NOT NULL,
+    fecha_contratacion DATE NOT NULL,
+    salario DECIMAL(10,2),
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB;
+
+-- Tabla de tipos de vehículo
+CREATE TABLE tipos_vehiculo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    tarifa_base DECIMAL(10,2) NOT NULL
+) ENGINE=InnoDB;
+
+-- Tabla de clientes
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    email VARCHAR(100),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    puntos_fidelidad INT DEFAULT 0
+) ENGINE=InnoDB;
+
+-- Tabla de vehículos
+CREATE TABLE vehiculos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    tipo_vehiculo_id INT NOT NULL,
+    placa VARCHAR(20) NOT NULL UNIQUE,
+    marca VARCHAR(50),
+    modelo VARCHAR(50),
+    color VARCHAR(30),
+    anio INT,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (tipo_vehiculo_id) REFERENCES tipos_vehiculo(id)
+) ENGINE=InnoDB;
+
+-- Tabla de servicios
+CREATE TABLE servicios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    duracion_estimada INT COMMENT 'En minutos',
+    precio DECIMAL(10,2) NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+) ENGINE=InnoDB;
+
+-- Tabla de ofertas
+CREATE TABLE ofertas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    descuento DECIMAL(5,2) COMMENT 'Porcentaje de descuento',
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    activa BOOLEAN DEFAULT TRUE,
+    aplica_lunes BOOLEAN DEFAULT FALSE,
+    aplica_martes BOOLEAN DEFAULT FALSE,
+    aplica_miercoles BOOLEAN DEFAULT FALSE,
+    aplica_jueves BOOLEAN DEFAULT FALSE,
+    aplica_viernes BOOLEAN DEFAULT FALSE,
+    aplica_sabado BOOLEAN DEFAULT FALSE,
+    aplica_domingo BOOLEAN DEFAULT FALSE
+) ENGINE=InnoDB;
+
+-- Tabla de estados de lavado
+CREATE TABLE estados_lavado (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    color VARCHAR(20) COMMENT 'Color para representar el estado en la UI'
+) ENGINE=InnoDB;
+
+-- Tabla de lavados
+CREATE TABLE lavados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehiculo_id INT NOT NULL,
+    empleado_id INT NOT NULL,
+    fecha_hora_inicio DATETIME NOT NULL,
+    fecha_hora_fin DATETIME,
+    estado_id INT NOT NULL,
+    total DECIMAL(10,2),
+    observaciones TEXT,
+    FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id),
+    FOREIGN KEY (empleado_id) REFERENCES empleados(id),
+    FOREIGN KEY (estado_id) REFERENCES estados_lavado(id)
+) ENGINE=InnoDB;
+
+-- Tabla de detalle de lavados (servicios aplicados)
+CREATE TABLE lavados_servicios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lavado_id INT NOT NULL,
+    servicio_id INT NOT NULL,
+    oferta_id INT,
+    precio_aplicado DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (lavado_id) REFERENCES lavados(id),
+    FOREIGN KEY (servicio_id) REFERENCES servicios(id),
+    FOREIGN KEY (oferta_id) REFERENCES ofertas(id)
+) ENGINE=InnoDB;
+
+-- Tabla de tipos de reclamo
+CREATE TABLE tipos_reclamo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    descripcion TEXT
+) ENGINE=InnoDB;
+
+-- Tabla de estados de reclamo
+CREATE TABLE estados_reclamo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    color VARCHAR(20) COMMENT 'Color para representar el estado en la UI'
+) ENGINE=InnoDB;
+
+-- Tabla de reclamos
+CREATE TABLE reclamos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    lavado_id INT,
+    tipo_reclamo_id INT NOT NULL,
+    estado_reclamo_id INT NOT NULL,
+    titulo VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_cierre DATETIME,
+    solucion TEXT,
+    notificar_cliente BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (lavado_id) REFERENCES lavados(id),
+    FOREIGN KEY (tipo_reclamo_id) REFERENCES tipos_reclamo(id),
+    FOREIGN KEY (estado_reclamo_id) REFERENCES estados_reclamo(id)
+) ENGINE=InnoDB;
+
+-- Tabla de evaluaciones de empleados
+CREATE TABLE evaluaciones_empleados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    empleado_id INT NOT NULL,
+    evaluador_id INT NOT NULL,
+    lavado_id INT,
+    puntuacion INT NOT NULL COMMENT '1-5',
+    comentarios TEXT,
+    fecha_evaluacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empleado_id) REFERENCES empleados(id),
+    FOREIGN KEY (evaluador_id) REFERENCES usuarios(id),
+    FOREIGN KEY (lavado_id) REFERENCES lavados(id),
+    CHECK (puntuacion BETWEEN 1 AND 5)
+) ENGINE=InnoDB;
+
+-- Tabla de configuración del sistema
+CREATE TABLE configuracion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(50) NOT NULL UNIQUE,
+    valor TEXT,
+    descripcion VARCHAR(255)
+) ENGINE=InnoDB;
+
+-- Insertar datos iniciales
+INSERT INTO roles (nombre, descripcion) VALUES 
+('Administrador', 'Acceso completo al sistema'),
+('Supervisor', 'Puede gestionar empleados y ver reportes'),
+('Empleado', 'Puede registrar lavados y clientes'),
+('Cliente', 'Acceso al portal de clientes');
+
+INSERT INTO tipos_reclamo (nombre, descripcion) VALUES 
+('Calidad del servicio', 'Problemas con la calidad del lavado'),
+('Atención del empleado', 'Quejas sobre el trato del personal'),
+('Daño al vehículo', 'Daños ocasionados durante el lavado'),
+('Facturación', 'Problemas con cobros o facturas'),
+('Otro', 'Otro tipo de reclamo no categorizado');
+
+INSERT INTO estados_reclamo (nombre, color) VALUES 
+('Pendiente', '#FFC107'),
+('En revisión', '#17A2B8'),
+('Resuelto', '#28A745'),
+('Rechazado', '#DC3545'),
+('En espera de cliente', '#6C757D');
+
+INSERT INTO estados_lavado (nombre, color) VALUES 
+('Pendiente', '#FFC107'),
+('En proceso', '#17A2B8'),
+('Completado', '#28A745'),
+('Cancelado', '#DC3545'),
+('Reagendado', '#6C757D');
+
+INSERT INTO tipos_vehiculo (nombre, tarifa_base) VALUES 
+('Automóvil pequeño', 25.00),
+('Automóvil mediano', 30.00),
+('Automóvil grande', 35.00),
+('Camioneta', 40.00),
+('Motocicleta', 20.00);
+
+INSERT INTO servicios (nombre, descripcion, duracion_estimada, precio) VALUES 
+('Lavado básico', 'Lavado exterior con champú y secado manual', 30, 25.00),
+('Lavado premium', 'Lavado exterior e interior con aspirado y limpieza de vidrios', 45, 40.00),
+('Encerado', 'Aplicación de cera para protección de pintura', 20, 30.00),
+('Aspirado completo', 'Aspirado profundo de asientos y alfombras', 25, 20.00),
+('Limpieza de motor', 'Limpieza superficial del compartimiento del motor', 30, 35.00),
+('Pulido', 'Pulido profesional para eliminar rayas superficiales', 60, 80.00);
+
+INSERT INTO ofertas (nombre, descripcion, descuento, fecha_inicio, fecha_fin, activa, aplica_jueves) VALUES 
+('2x1 los jueves', 'Promoción especial todos los jueves: paga un lavado y lleva dos', 50.00, '2023-01-01', '2023-12-31', TRUE, TRUE),
+('Primer lavado gratis', 'Promoción de bienvenida para nuevos clientes', 100.00, '2023-01-01', '2023-12-31', TRUE, FALSE),
+('Descuento por fidelidad', '20% de descuento en tu sexto lavado', 20.00, '2023-01-01', '2023-12-31', TRUE, FALSE);
+
+-- Insertar usuario administrador (password: admin123)
+INSERT INTO usuarios (username, password, nombre_completo, email, rol_id) VALUES 
+('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq5Y4B7E6Sak3uV7z6TQ9Jg7sYFbO2', 'Administrador del Sistema', 'admin@washmanager.com', 1);
+
+-- Insertar empleado de prueba
+INSERT INTO usuarios (username, password, nombre_completo, email, rol_id) VALUES 
+('empleado1', '$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq5Y4B7E6Sak3uV7z6TQ9Jg7sYFbO2', 'Juan Pérez', 'juan@washmanager.com', 3);
+
+INSERT INTO empleados (usuario_id, puesto, fecha_contratacion, salario) VALUES 
+(2, 'Lavador', '2022-01-15', 1200.00);
+
+-- Insertar cliente de prueba
+INSERT INTO clientes (nombre, telefono, email) VALUES 
+('María González', '5551234567', 'maria@example.com'),
+('Carlos López', '5557654321', 'carlos@example.com');
+
+-- Insertar vehículos de prueba
+INSERT INTO vehiculos (cliente_id, tipo_vehiculo_id, placa, marca, modelo, color, anio) VALUES 
+(1, 1, 'ABC123', 'Toyota', 'Corolla', 'Rojo', 2020),
+(2, 2, 'XYZ789', 'Honda', 'Civic', 'Azul', 2019);
+
+-- Insertar lavados de prueba
+INSERT INTO lavados (vehiculo_id, empleado_id, fecha_hora_inicio, fecha_hora_fin, estado_id, total) VALUES 
+(1, 1, '2023-06-01 10:00:00', '2023-06-01 10:45:00', 3, 40.00),
+(2, 1, '2023-06-02 14:00:00', '2023-06-02 14:30:00', 3, 25.00);
+
+INSERT INTO lavados_servicios (lavado_id, servicio_id, precio_aplicado) VALUES 
+(1, 2, 40.00),
+(2, 1, 25.00);
+
+-- Insertar reclamo de prueba
+INSERT INTO reclamos (cliente_id, lavado_id, tipo_reclamo_id, estado_reclamo_id, titulo, descripcion) VALUES 
+(1, 1, 1, 1, 'Manchas después del lavado', 'Después del lavado premium quedaron manchas en la pintura');
+
+-- Insertar evaluación de prueba
+INSERT INTO evaluaciones_empleados (empleado_id, evaluador_id, lavado_id, puntuacion, comentarios) VALUES 
+(1, 1, 1, 4, 'Buen trabajo, pero faltó atención a detalles');
+
+-- Insertar configuración del sistema
+INSERT INTO configuracion (clave, valor, descripcion) VALUES 
+('TARIFA_BASE', '25.00', 'Tarifa base para lavado básico'),
+('HORARIO_APERTURA', '08:00:00', 'Hora de apertura del lavadero'),
+('HORARIO_CIERRE', '18:00:00', 'Hora de cierre del lavadero'),
+('DIAS_TRABAJO', '1,2,3,4,5,6', 'Días de trabajo (1=lunes, 7=domingo)');
+
+-- Creación de vistas útiles
+CREATE VIEW vista_lavados_detallados AS
+SELECT 
+    l.id,
+    v.placa,
+    CONCAT(c.nombre, ' - ', v.marca, ' ', v.modelo) AS vehiculo,
+    CONCAT(u.nombre_completo) AS empleado,
+    l.fecha_hora_inicio,
+    l.fecha_hora_fin,
+    TIMESTAMPDIFF(MINUTE, l.fecha_hora_inicio, l.fecha_hora_fin) AS duracion_minutos,
+    el.nombre AS estado,
+    l.total,
+    GROUP_CONCAT(s.nombre SEPARATOR ', ') AS servicios
+FROM lavados l
+JOIN vehiculos v ON l.vehiculo_id = v.id
+JOIN clientes c ON v.cliente_id = c.id
+JOIN empleados e ON l.empleado_id = e.id
+JOIN usuarios u ON e.usuario_id = u.id
+JOIN estados_lavado el ON l.estado_id = el.id
+JOIN lavados_servicios ls ON l.id = ls.lavado_id
+JOIN servicios s ON ls.servicio_id = s.id
+GROUP BY l.id;
+
+CREATE VIEW vista_reclamos_pendientes AS
+SELECT 
+    r.id,
+    r.titulo,
+    c.nombre AS cliente,
+    v.placa AS vehiculo,
+    tr.nombre AS tipo_reclamo,
+    er.nombre AS estado,
+    r.fecha_creacion,
+    DATEDIFF(NOW(), r.fecha_creacion) AS dias_pendiente
+FROM reclamos r
+JOIN clientes c ON r.cliente_id = c.id
+LEFT JOIN lavados l ON r.lavado_id = l.id
+LEFT JOIN vehiculos v ON l.vehiculo_id = v.id
+JOIN tipos_reclamo tr ON r.tipo_reclamo_id = tr.id
+JOIN estados_reclamo er ON r.estado_reclamo_id = er.id
+WHERE er.nombre IN ('Pendiente', 'En revisión');
+
+-- Creación de procedimientos almacenados
+DELIMITER //
+
+CREATE PROCEDURE sp_crear_lavado(
+    IN p_vehiculo_id INT,
+    IN p_empleado_id INT,
+    IN p_fecha_hora_inicio DATETIME,
+    IN p_servicios_ids TEXT
+)
+BEGIN
+    DECLARE v_lavado_id INT;
+    DECLARE v_total DECIMAL(10,2) DEFAULT 0;
+    DECLARE v_servicio_id INT;
+    DECLARE v_servicio_precio DECIMAL(10,2);
+    DECLARE v_done INT DEFAULT FALSE;
+    DECLARE v_cursor CURSOR FOR 
+        SELECT id, precio FROM servicios 
+        WHERE FIND_IN_SET(id, p_servicios_ids) > 0;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
+    
+    -- Crear el lavado
+    INSERT INTO lavados (vehiculo_id, empleado_id, fecha_hora_inicio, estado_id)
+    VALUES (p_vehiculo_id, p_empleado_id, p_fecha_hora_inicio, 1);
+    
+    SET v_lavado_id = LAST_INSERT_ID();
+    
+    -- Procesar cada servicio
+    OPEN v_cursor;
+    read_loop: LOOP
+        FETCH v_cursor INTO v_servicio_id, v_servicio_precio;
+        IF v_done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        INSERT INTO lavados_servicios (lavado_id, servicio_id, precio_aplicado)
+        VALUES (v_lavado_id, v_servicio_id, v_servicio_precio);
+        
+        SET v_total = v_total + v_servicio_precio;
+    END LOOP;
+    CLOSE v_cursor;
+    
+    -- Actualizar el total del lavado
+    UPDATE lavados SET total = v_total WHERE id = v_lavado_id;
+    
+    SELECT v_lavado_id AS lavado_id, v_total AS total;
+END //
+
+CREATE PROCEDURE sp_generar_reporte_mensual(
+    IN p_mes INT,
+    IN p_anio INT
+)
+BEGIN
+    -- Reporte de lavados por día
+    SELECT 
+        DAY(fecha_hora_inicio) AS dia,
+        COUNT(*) AS total_lavados,
+        SUM(total) AS ingresos_totales
+    FROM lavados
+    WHERE MONTH(fecha_hora_inicio) = p_mes 
+    AND YEAR(fecha_hora_inicio) = p_anio
+    GROUP BY DAY(fecha_hora_inicio)
+    ORDER BY dia;
+    
+    -- Reporte de servicios más solicitados
+    SELECT 
+        s.nombre AS servicio,
+        COUNT(*) AS veces_solicitado,
+        SUM(ls.precio_aplicado) AS ingresos_generados
+    FROM lavados_servicios ls
+    JOIN servicios s ON ls.servicio_id = s.id
+    JOIN lavados l ON ls.lavado_id = l.id
+    WHERE MONTH(l.fecha_hora_inicio) = p_mes 
+    AND YEAR(l.fecha_hora_inicio) = p_anio
+    GROUP BY ls.servicio_id
+    ORDER BY veces_solicitado DESC;
+    
+    -- Reporte de empleados más productivos
+    SELECT 
+        u.nombre_completo AS empleado,
+        COUNT(*) AS lavados_realizados,
+        SUM(l.total) AS ingresos_generados,
+        AVG(ee.puntuacion) AS calificacion_promedio
+    FROM lavados l
+    JOIN empleados e ON l.empleado_id = e.id
+    JOIN usuarios u ON e.usuario_id = u.id
+    LEFT JOIN evaluaciones_empleados ee ON e.id = ee.empleado_id
+    WHERE MONTH(l.fecha_hora_inicio) = p_mes 
+    AND YEAR(l.fecha_hora_inicio) = p_anio
+    GROUP BY l.empleado_id
+    ORDER BY lavados_realizados DESC;
+END //
+
+DELIMITER ;
+
+-- Creación de triggers
+DELIMITER //
+
+CREATE TRIGGER tr_after_insert_lavado_completado
+AFTER UPDATE ON lavados
+FOR EACH ROW
+BEGIN
+    IF NEW.estado_id = 3 AND OLD.estado_id != 3 THEN
+        -- Actualizar puntos de fidelidad del cliente
+        UPDATE clientes 
+        JOIN vehiculos v ON c.id = v.cliente_id
+        SET c.puntos_fidelidad = c.puntos_fidelidad + 10
+        WHERE v.id = NEW.vehiculo_id;
+    END IF;
+END //
+
+DELIMITER ;
